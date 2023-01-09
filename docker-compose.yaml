@@ -1,0 +1,40 @@
+version: '3.3'
+services:
+  kms:
+    build: .
+    container_name: kms
+    env_file:
+      - ./pro.env
+    command: start
+    volumes:
+      - pseudo-kms:/data/pseudo-kms
+    restart: unless-stopped
+    depends_on:
+      - kms_db
+    ports:
+      - "8074:8074"
+    expose:
+      - "8074"
+    networks:
+      - kms-net
+      - proxy
+  kms_db:
+    container_name: kms_db
+    image: postgres
+    env_file:
+      - ./pro.env
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5430:5432"
+    restart: unless-stopped
+    networks:
+      - kms-net
+volumes:
+  postgres:
+  pseudo-kms:
+networks:
+  proxy:
+    external: true
+  kms-net:
+    external: false

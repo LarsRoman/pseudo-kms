@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/labstack/gommon/log"
 	"lars-krieger.de/pseudo-kms/crypt"
@@ -12,6 +13,7 @@ import (
 	"lars-krieger.de/pseudo-kms/database/models"
 	"lars-krieger.de/pseudo-kms/rest/structs"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -28,7 +30,13 @@ func Router(host string, port int) {
 	router.POST("/remove/key", postDeleteKey)
 	router.POST("/remove/user", postDeleteUser)
 
-	err := router.Run(fmt.Sprintf("%s:%d", host, port))
+	var portString string = ""
+	if port != 80 && port != 443 && port > 0 {
+		portString = ":" + strconv.Itoa(port)
+	}
+
+	err := autotls.Run(router, fmt.Sprintf("%s%s", host, portString), "localhost")
+	//err := router.Run(fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		log.Errorf("Could not start GIN %s", err.Error())
 	}

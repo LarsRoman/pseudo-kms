@@ -38,3 +38,21 @@ func PublicKeyToMem(publicKey *ecc.PublicKey) []byte {
 	}
 	return nil
 }
+
+func MemToPrivateKey(privateKey []byte) *ecc.PrivateKey {
+	if pK, err := ecc.UnmarshalPrivateKey(privateKey); err != nil {
+		log.Errorf("Creating the Private key from DB failed: %s ", err.Error())
+	} else {
+		return pK
+	}
+	return nil
+}
+
+func MemToPublicKey(publicKey []byte) *ecc.PublicKey {
+	if pK, err := ecc.DecodePEMPublicKey(publicKey); err != nil {
+		log.Errorf("Creating the Public key from DB failed: %s ", err.Error())
+	} else {
+		return pK
+	}
+	return nil
+}

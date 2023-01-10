@@ -8,7 +8,7 @@ import (
 	"lars-krieger.de/pseudo-kms/database/models"
 )
 
-func GetOrCreateKey(ops crypt.AsymmetricOps, username, token string) models.Keys {
+func GetOrCreateKey(ops crypt.AsymmetricKeyOps, username, token string) models.Keys {
 	var opt helper.AsymmetricOpt = ops.GetInfo()
 	var keystore models.Keystore = GetOrCreateKeystore(username, token)
 	var key models.Keys

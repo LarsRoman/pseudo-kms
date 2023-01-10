@@ -1,13 +1,17 @@
 package crypt
 
-import "lars-krieger.de/pseudo-kms/crypt/helper"
+import (
+	"lars-krieger.de/pseudo-kms/crypt/helper"
+	"lars-krieger.de/pseudo-kms/database/models"
+)
 
-type AsymmetricOps interface {
+type AsymmetricKeyOps interface {
 	Create() ([]byte, []byte)
-	GetAlg() helper.KeyTypes
+	GetAlg() string
 	GetInfo() helper.AsymmetricOpt
 	Sign(msg string) string
 	SignWithHash(msg string, hash string) string
 	Encrypt(msg string) string
 	Decrypt(msg string) string
+	Bind(models.Keys)
 }

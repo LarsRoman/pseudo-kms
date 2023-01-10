@@ -76,7 +76,11 @@ func PrivateKeyToMem(privateKey *rsa.PrivateKey) []byte {
 }
 
 func MemToPrivateKey(privateKeyBytes []byte) *rsa.PrivateKey {
-	if privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyBytes); err != nil {
+	block, rest := pem.Decode(privateKeyBytes)
+	if len(rest) > 0 {
+		log.Infof("Decoding private Key left a rest: %v", rest)
+	}
+	if privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
 		log.Errorf("Unable to Parse Private Key: %s", err.Error())
 		return nil
 	} else {
@@ -92,7 +96,11 @@ func PublicKeyToMem(privateKey *rsa.PublicKey) []byte {
 }
 
 func MemToPublicKey(publicKeyBytes []byte) *rsa.PublicKey {
-	if publicKey, err := x509.ParsePKCS1PublicKey(publicKeyBytes); err != nil {
+	block, rest := pem.Decode(publicKeyBytes)
+	if len(rest) > 0 {
+		log.Infof("Decoding Public Key left a rest: %v", rest)
+	}
+	if publicKey, err := x509.ParsePKCS1PublicKey(block.Bytes); err != nil {
 		log.Errorf("Unable to Parse Public Key: %s", err.Error())
 		return nil
 	} else {

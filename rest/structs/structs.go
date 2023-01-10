@@ -1,7 +1,5 @@
 package structs
 
-import "lars-krieger.de/pseudo-kms/crypt/helper"
-
 type GinUser struct {
 	Username string `json:"username"`
 	Token    string `json:"token"`
@@ -15,10 +13,12 @@ type GinNewUser struct {
 
 type GinCreateKey struct {
 	GinUser           GinUser
-	AsymmetricKeyType helper.KeyTypes `json:"keytype"`
-	KeyOps            string          `json:"keyops"`
-	KeyName           string          `json:"keyname"`
-	KeyVersion        int             `json:"keyversion"`
+	AsymmetricKeyType string `json:"keytype"`
+	KeyCurve          string `json:"keycurve"`
+	KeyOps            string `json:"keyops"`
+	KeySize           int    `json:"keysize"`
+	KeyName           string `json:"keyname"`
+	KeyVersion        int    `json:"keyversion"`
 }
 
 type GinKey struct {

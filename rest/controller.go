@@ -25,6 +25,8 @@ func Router(host string, port int) {
 	router.POST("/encrypt", postEncrypt)
 	router.POST("/decrypt", postDecrypt)
 	router.GET("/get/key", getKey)
+	router.POST("/remove/key", postDeleteKey)
+	router.POST("/remove/user", postDeleteUser)
 
 	err := router.Run(fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
@@ -41,6 +43,28 @@ func getKey(c *gin.Context) {
 	}
 	var key models.Keys = database.GetCurrentKey(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.KeyName)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": fmt.Sprintf("%s", key.PublicKey)})
+}
+
+func postDeleteKey(c *gin.Context) {
+	var ginKey structs.GinDeleteKey
+	if err := c.BindJSON(&ginKey); err != nil {
+		log.Errorf("Failed to bind JSON: %s", err.Error())
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
+		return
+	}
+	database.DeleteKey(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.KeyName, ginKey.KeyVersion)
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+}
+
+func postDeleteUser(c *gin.Context) {
+	var ginKey structs.GinDeleteUser
+	if err := c.BindJSON(&ginKey); err != nil {
+		log.Errorf("Failed to bind JSON: %s", err.Error())
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
+		return
+	}
+	database.DeleteUser(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.DeleteUsername)
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
 }
 
 func postRotateKey(c *gin.Context) {

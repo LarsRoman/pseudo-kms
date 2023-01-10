@@ -24,6 +24,7 @@ Following REST Calles are included by now:
     router.POST("/decrypt", postDecrypt)  
     router.GET("/get/key", getKey)
 
+
 ## Following JSON is consumed by the endpoints:
 
 ### /rotate
@@ -54,6 +55,15 @@ Following REST Calles are included by now:
 
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "msg": "MESSAGE AS HEX"}
 
+### /remove/key
+
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE DELETED", "keyversion": keyversion to be deleted (in case to delete all version, use -1)}
+
+### /remove/user
+
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "deleteusername": "USER TO BE REMOVED"}
+
+
 ## Implementation
 
 |                  | RSA | ECC |
@@ -66,7 +76,7 @@ Following REST Calles are included by now:
 | /encrypt         | YES | YES |
 | /decrypt         | YES | YES |
 | /get/key         | YES | YES |
-| /delete/key      | NO  | NO  |
+| /delete/key      | YES | YES |
 
 
 ### RSA Supported "Key Types"

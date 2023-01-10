@@ -52,11 +52,10 @@ func CreateUser(username, token string, powerUser bool) {
 func DeleteUser(username, token string, usernameToDelete string) {
 	if username == usernameToDelete {
 		log.Infof("You are not allowed to delete your own user. Please contact support")
+		return
 	}
 	if CheckPassword(username, token) && CheckPowerUser(username) {
-		DB.Delete(&models.AccessUser{
-			Name: usernameToDelete,
-		})
+		DeleteKeyKeyStoreUser(usernameToDelete)
 	} else {
 		log.Infof("%s is not authorized to delete another user", username)
 	}

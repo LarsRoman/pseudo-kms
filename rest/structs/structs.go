@@ -11,6 +11,11 @@ type GinNewUser struct {
 	Token    string `json:"newtoken"`
 }
 
+type GinDeleteUser struct {
+	GinUser        GinUser
+	DeleteUsername string `json:"deleteusername"`
+}
+
 type GinCreateKey struct {
 	GinUser           GinUser
 	AsymmetricKeyType string `json:"keytype"`
@@ -26,4 +31,10 @@ type GinKey struct {
 	KeyName string `json:"keyname"`
 	Message string `json:"msg"`
 	Hash    string `json:"hash"`
+}
+
+type GinDeleteKey struct {
+	GinUser    GinUser
+	KeyName    string `json:"keyname"`
+	KeyVersion int    `json:"keyversion"`
 }

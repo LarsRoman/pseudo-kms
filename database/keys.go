@@ -66,6 +66,23 @@ func GetCurrentKey(username, token, keyName string) models.Keys {
 	return key
 }
 
+func DeleteKey(username, token, keyName string, keyVersion int) {
+	var keystore models.Keystore = GetOrCreateKeystore(username, token)
+	//TODO I need to read the GORM documentation because the following is shitty
+	if keyVersion >= 0 {
+		DB.Delete(&models.Keys{}, models.Keys{
+			KeyName:    keyName,
+			Keystore:   keystore,
+			KeyVersion: keyVersion,
+		})
+	} else {
+		DB.Delete(&models.Keys{}, models.Keys{
+			KeyName:  keyName,
+			Keystore: keystore,
+		})
+	}
+}
+
 func toHex(bArr []byte) string {
 	return hex.EncodeToString(bArr)
 }

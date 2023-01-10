@@ -21,6 +21,8 @@ var publicKeyMemHex = "2d2d2d2d2d424547494e205055424c4943204b45592d2d2d2d2d0a4d4
 	"96266654f36444d746c663967566842693679437943393251714d42726b6c6c733650704d673d3d0a" +
 	"2d2d2d2d2d454e44205055424c4943204b45592d2d2d2d2d0a"
 
+var msg = "I am a secret message: You are cute!"
+
 func TestCreate(t *testing.T) {
 	var ecc ECC
 	priv, pub := ecc.Create()
@@ -102,5 +104,18 @@ func TestBind(t *testing.T) {
 		e.AsymmetricOpt.Version != key.KeyVersion ||
 		e.AsymmetricOpt.Hash != helper.Hashes(helper.SHA384) {
 		t.Errorf("Bind was not successful. ECC: %v, Used Key: %v", e, key)
+	}
+}
+
+func TestEncryptDecrypt(t *testing.T) {
+	var e ECC
+	e.PublicKey = *MemToPublicKey(helper.FromHex(publicKeyMemHex))
+	var encmsg string = e.Encrypt(helper.ToHex([]byte(msg)))
+
+	e.PrivateKey = *MemToPrivateKey(helper.FromHex(privateKeyMemHex))
+	var msg2 string = string(helper.FromHex(e.Decrypt(encmsg)))
+
+	if msg2 != msg {
+		t.Errorf("Expected %s, Actual %s", msg, msg2)
 	}
 }

@@ -62,6 +62,8 @@ var publicKeyMemHex = "2d2d2d2d2d424547494e20525341205055424c4943204b45592d2d2d2
 	"a757a3367365677457a5746532b43585a586176746961644b452f53396f5968454577494441514142" +
 	"0a2d2d2d2d2d454e4420525341205055424c4943204b45592d2d2d2d2d0a"
 
+var msg = "I am a secret message: Never gonna give you up!"
+
 func TestCreate(t *testing.T) {
 	var r RSA
 	priv, pub := r.Create()
@@ -143,5 +145,17 @@ func TestBind(t *testing.T) {
 		r.AsymmetricOpt.Version != key.KeyVersion ||
 		r.AsymmetricOpt.Hash != helper.Hashes(helper.UNKNOWN) {
 		t.Errorf("Bind was not successful. RSA: %v, Used Key: %v", r, key)
+	}
+}
+func TestEncryptDecrypt(t *testing.T) {
+	var r RSA
+	r.PublicKey = *MemToPublicKey(helper.FromHex(publicKeyMemHex))
+	var encmsg string = r.Encrypt(helper.ToHex([]byte(msg)))
+
+	r.PrivateKey = *MemToPrivateKey(helper.FromHex(privateKeyMemHex))
+	var msg2 string = string(helper.FromHex(r.Decrypt(encmsg)))
+
+	if msg2 != msg {
+		t.Errorf("Expected %s, Actual %s", msg, msg2)
 	}
 }

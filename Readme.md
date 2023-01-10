@@ -3,6 +3,14 @@
 This project is designed to emulate a KMS.
 It must not be used on a productive environment
 
+Each User has one Keystore which includes all keys
+
+```mermaid
+graph LR
+USER -- 1 : 1 --> KEYSTORE
+KEYSTORE -- 1 : N --> KEYS
+```
+
 # Rest
 
 Following REST Calles are included by now:

@@ -1,6 +1,9 @@
 package helper
 
-import "strings"
+import (
+	"crypto/elliptic"
+	"strings"
+)
 
 type KeyTypes string
 
@@ -46,10 +49,10 @@ func (k RSAKeyTypes) ToHash() Hashes {
 type ECCKeyTypes string
 
 const (
-	ECDSA         ECCKeyTypes = "ECDSA"
-	ECDSA_SHA_256 ECCKeyTypes = "ECDSA_SHA_256"
-	ECDSA_SHA_384 ECCKeyTypes = "ECDSA_SHA_384"
-	ECDSA_SHA_512 ECCKeyTypes = "ECDSA_SHA_512"
+	ECDSA_P256         ECCKeyTypes = "ECDSA_P256"
+	ECDSA_P256_SHA_256 ECCKeyTypes = "ECDSA_P256_SHA_256"
+	ECDSA_P384_SHA_384 ECCKeyTypes = "ECDSA_P384_SHA_384"
+	ECDSA_P512_SHA_512 ECCKeyTypes = "ECDSA_P512_SHA_512"
 )
 
 func (k ECCKeyTypes) ToString() string {
@@ -57,14 +60,24 @@ func (k ECCKeyTypes) ToString() string {
 }
 
 func (k ECCKeyTypes) ToHash() Hashes {
-	if strings.Contains(k.ToString(), "265") {
+	if strings.Contains(k.ToString(), "_265") {
 		return SHA256
 	}
-	if strings.Contains(k.ToString(), "384") {
+	if strings.Contains(k.ToString(), "_384") {
 		return SHA384
 	}
-	if strings.Contains(k.ToString(), "5125") {
+	if strings.Contains(k.ToString(), "_512") {
 		return SHA512
 	}
 	return UNDEFINED
+}
+
+func (k ECCKeyTypes) ToCurve() elliptic.Curve {
+	if strings.Contains(k.ToString(), "384") {
+		return elliptic.P384()
+	}
+	if strings.Contains(k.ToString(), "512") {
+		return elliptic.P521()
+	}
+	return elliptic.P256()
 }

@@ -26,7 +26,7 @@ services:
     volumes:
       - postgres:/data/postgres
     ports:
-      - "5430:5432"
+      - "5432:5432"
     restart: unless-stopped
     networks:
       - kms-net

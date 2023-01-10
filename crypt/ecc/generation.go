@@ -2,6 +2,7 @@ package ecc
 
 import (
 	"crypto/elliptic"
+	"encoding/pem"
 	"github.com/labstack/gommon/log"
 	"gitlab.com/elktree/ecc"
 )
@@ -13,6 +14,10 @@ func GenerateDefaultPrivateKey() (*ecc.PrivateKey, *ecc.PublicKey) {
 }
 
 func GeneratePrivateKey(curve elliptic.Curve) (*ecc.PrivateKey, *ecc.PublicKey) {
+	if curve == nil {
+		log.Infof("No Curve was provided. Using %v", defaultCurve.Params())
+		return GenerateDefaultPrivateKey()
+	}
 	publicKey, privateKey, err := ecc.GenerateKeys(curve)
 	if err != nil {
 		log.Errorf("Creating of ECC Key Pair was not possible: %s", err.Error())
@@ -40,7 +45,11 @@ func PublicKeyToMem(publicKey *ecc.PublicKey) []byte {
 }
 
 func MemToPrivateKey(privateKey []byte) *ecc.PrivateKey {
-	if pK, err := ecc.UnmarshalPrivateKey(privateKey); err != nil {
+	block, rest := pem.Decode(privateKey)
+	if len(rest) > 0 {
+		log.Infof("Decoding private Key left a rest: %v", rest)
+	}
+	if pK, err := ecc.UnmarshalPrivateKey(block.Bytes); err != nil {
 		log.Errorf("Creating the Private key from DB failed: %s ", err.Error())
 	} else {
 		return pK

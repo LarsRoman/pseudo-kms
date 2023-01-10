@@ -56,16 +56,18 @@ Following REST Calles are included by now:
 
 ## Implementation
 
-|                  | RSA | ECC  |
-|------------------|-----|------|
-| /rotate          | YES | NO   |
-| /create/key      | YES | YES  |
-| /create/keystore | YES | YES  |
-| /create/user     | -   | -    |
-| /sign            | YES | NO   |
-| /encrypt         | YES | NO   |
-| /decrypt         | YES | NO   |
-| /get/key         | YES | YES  |
+|                  | RSA | ECC |
+|------------------|-----|-----|
+| /rotate          | YES | YES |
+| /create/key      | YES | YES |
+| /create/keystore | YES | YES |
+| /create/user     | -   | -   |
+| /sign            | YES | YES |
+| /encrypt         | YES | YES |
+| /decrypt         | YES | YES |
+| /get/key         | YES | YES |
+| /delete/key      | NO  | NO  |
+
 
 ### RSA Supported "Key Types"
 
@@ -81,12 +83,12 @@ Following REST Calles are included by now:
 
 ### ECC Supported "Key Types"
 
-| Name          | Planed | Supported/Implemented |
-|---------------|--------|-----------------------|
-| ECDSA         | YES    | NO                    |
-| ECDSA_SHA_256 | YES    | NO                    |
-| ECDSA_SHA_384 | YES    | NO                    |
-| ECDSA_SHA_512 | YES    | NO                    |
+| Name               | Planed | Supported/Implemented |
+|--------------------|--------|-----------------------|
+| ECDSA_P256         | -      | YES                   |
+| ECDSA_P256_SHA_256 | -      | YES                   |
+| ECDSA_P384_SHA_384 | -      | YES                   |
+| ECDSA_P512_SHA_512 | -      | YES                   |
 
 # Setup
 

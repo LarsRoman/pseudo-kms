@@ -12,15 +12,19 @@ services:
     depends_on:
       - kms_db
     ports:
-      - "8074:8074"
+      - "8080:80"
     expose:
-      - "8074"
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kmsweb.rule=Host(`kms.localhost`)"
+      - "traefik.http.routers.kmsweb.entrypoints=web"
     networks:
       - kms-net
       - proxy
   kms_db:
     container_name: kms_db
-    image: postgres
+    image: postgres:15.1
     env_file:
       - ./pro.env
     volumes:

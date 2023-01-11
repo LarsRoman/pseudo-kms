@@ -2,8 +2,8 @@ package rest
 
 import (
 	"fmt"
-	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/labstack/gommon/log"
 	"lars-krieger.de/pseudo-kms/crypt"
 	"lars-krieger.de/pseudo-kms/crypt/ecc"
@@ -13,7 +13,6 @@ import (
 	"lars-krieger.de/pseudo-kms/database/models"
 	"lars-krieger.de/pseudo-kms/rest/structs"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -30,12 +29,7 @@ func Router(host string, port int) {
 	router.POST("/remove/key", postDeleteKey)
 	router.POST("/remove/user", postDeleteUser)
 
-	var portString string = ""
-	if port != 80 && port != 443 && port > 0 {
-		portString = ":" + strconv.Itoa(port)
-	}
-
-	err := autotls.Run(router, fmt.Sprintf("%s%s", host, portString), "localhost")
+	err := router.Run(fmt.Sprintf(":%d", port))
 	//err := router.Run(fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		log.Errorf("Could not start GIN %s", err.Error())
@@ -43,46 +37,67 @@ func Router(host string, port int) {
 }
 
 func getKey(c *gin.Context) {
-	var ginKey structs.GinKey
-	if err := c.BindJSON(&ginKey); err != nil {
+	var usedJSONStruct structs.GinKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	var key models.Keys = database.GetCurrentKey(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.KeyName)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	var key models.Keys = database.GetCurrentKey(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.KeyName,
+	)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": fmt.Sprintf("%s", key.PublicKey)})
 }
 
 func postDeleteKey(c *gin.Context) {
-	var ginKey structs.GinDeleteKey
-	if err := c.BindJSON(&ginKey); err != nil {
+	var usedJSONStruct structs.GinDeleteKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	database.DeleteKey(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.KeyName, ginKey.KeyVersion)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	database.DeleteKey(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.KeyName,
+		usedJSONStruct.KeyVersion,
+	)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
 }
 
 func postDeleteUser(c *gin.Context) {
-	var ginKey structs.GinDeleteUser
-	if err := c.BindJSON(&ginKey); err != nil {
+	var usedJSONStruct structs.GinDeleteUser
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	database.DeleteUser(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.DeleteUsername)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	database.DeleteUser(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.DeleteUsername,
+	)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
 }
 
 func postRotateKey(c *gin.Context) {
-	var ginKey structs.GinKey
-	if err := c.BindJSON(&ginKey); err != nil {
+	var usedJSONStruct structs.GinKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	var currentKey models.Keys = database.GetCurrentKey(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.KeyName)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	var currentKey models.Keys = database.GetCurrentKey(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.KeyName,
+	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(currentKey.KeyAlg)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
@@ -95,102 +110,118 @@ func postRotateKey(c *gin.Context) {
 }
 
 func postCreateKeyStore(c *gin.Context) {
-	var user structs.GinUser
-	if err := c.BindJSON(&user); err != nil {
+	var usedJSONStruct structs.GinUser
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	database.GetOrCreateKeystore(user.Username, user.Token)
+	database.GetOrCreateKeystore(usedJSONStruct.Username, usedJSONStruct.Token)
 	c.IndentedJSON(http.StatusCreated, gin.H{"message": "Keystore created"})
 }
 
 func postCreateKey(c *gin.Context) {
-	var newKey structs.GinCreateKey
-	if err := c.BindJSON(&newKey); err != nil {
+	var usedJSONStruct structs.GinCreateKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-
-	var ops crypt.AsymmetricKeyOps = detectECCorRSA(newKey.AsymmetricKeyType)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	var ops crypt.AsymmetricKeyOps = detectECCorRSA(usedJSONStruct.AsymmetricKeyType)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
 		return
 	}
 	ops.Bind(models.Keys{
-		KeyName:    newKey.KeyName,
-		KeyVersion: newKey.KeyVersion,
-		KeyAlg:     newKey.AsymmetricKeyType,
-		KeySize:    newKey.KeySize,
-		KeyCurve:   newKey.KeyCurve,
+		KeyName:    usedJSONStruct.KeyName,
+		KeyVersion: usedJSONStruct.KeyVersion,
+		KeyAlg:     usedJSONStruct.AsymmetricKeyType,
+		KeySize:    usedJSONStruct.KeySize,
+		KeyCurve:   usedJSONStruct.KeyCurve,
 		KeyUse:     "encryption/signing",
 	})
-	database.GetOrCreateKey(ops, newKey.GinUser.Username, newKey.GinUser.Token)
+	database.GetOrCreateKey(ops, usedJSONStruct.GinUser.Username, usedJSONStruct.GinUser.Token)
 	c.IndentedJSON(http.StatusCreated, gin.H{"message": "RSA Key was Created"})
 }
 
 func postSignWithKey(c *gin.Context) {
-	var signWithKey structs.GinKey
-	if err := c.BindJSON(&signWithKey); err != nil {
+	var usedJSONStruct structs.GinKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	var key models.Keys = database.GetCurrentKey(signWithKey.GinUser.Username, signWithKey.GinUser.Token, signWithKey.KeyName)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	var key models.Keys = database.GetCurrentKey(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.KeyName,
+	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
 		return
 	}
-	var hexSignature string = ops.Sign(signWithKey.Message)
+	var hexSignature string = ops.Sign(usedJSONStruct.Message)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": hexSignature})
 }
 
 func postEncrypt(c *gin.Context) {
-	var signWithKey structs.GinKey
-	if err := c.BindJSON(&signWithKey); err != nil {
+	var usedJSONStruct structs.GinKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	var key models.Keys = database.GetCurrentKey(signWithKey.GinUser.Username, signWithKey.GinUser.Token, signWithKey.KeyName)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	var key models.Keys = database.GetCurrentKey(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.KeyName,
+	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
 		return
 	}
-	var hexEncrypt string = ops.Encrypt(signWithKey.Message)
+	var hexEncrypt string = ops.Encrypt(usedJSONStruct.Message)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": hexEncrypt})
 }
 
 func postDecrypt(c *gin.Context) {
-	var ginKey structs.GinKey
-	if err := c.BindJSON(&ginKey); err != nil {
+	var usedJSONStruct structs.GinKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	var key models.Keys = database.GetCurrentKey(ginKey.GinUser.Username, ginKey.GinUser.Token, ginKey.KeyName)
+	usedJSONStruct.GinUser = bindGinUser(c)
+	var key models.Keys = database.GetCurrentKey(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.KeyName,
+	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
 		return
 	}
-	var hexDecrypt string = ops.Decrypt(ginKey.Message)
+	var hexDecrypt string = ops.Decrypt(usedJSONStruct.Message)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": hexDecrypt})
 }
 
 func postCreateUser(c *gin.Context) {
-	var newUser structs.GinNewUser
-	if err := c.BindJSON(&newUser); err != nil {
+	var usedJSONStruct structs.GinNewUser
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
 		log.Errorf("Failed to bind JSON: %s", err.Error())
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
 		return
 	}
-	if isAuth, _ := database.GetAndCheckUser(newUser.GinUser.Username, newUser.GinUser.Token); isAuth {
-		database.CreateUser(newUser.Username, newUser.Token, false)
-		c.IndentedJSON(http.StatusCreated, gin.H{"message": fmt.Sprintf("User %s created", newUser.Username)})
+	usedJSONStruct.GinUser = bindGinUser(c)
+	if isAuth, _ := database.GetAndCheckUser(usedJSONStruct.GinUser.Username, usedJSONStruct.GinUser.Token); isAuth {
+		database.CreateUser(usedJSONStruct.Username, usedJSONStruct.Token, false)
+		c.IndentedJSON(http.StatusCreated, gin.H{"message": fmt.Sprintf("User %s created", usedJSONStruct.Username)})
 	} else {
 		c.IndentedJSON(http.StatusForbidden, gin.H{"message": "New User could not be created"})
 	}
@@ -203,4 +234,14 @@ func detectECCorRSA(keyAlg string) crypt.AsymmetricKeyOps {
 		return &ecc.ECC{}
 	}
 	return nil
+}
+
+func bindGinUser(c *gin.Context) structs.GinUser {
+	var newUser structs.GinUser
+	if err := c.ShouldBindBodyWith(&newUser, binding.JSON); err != nil {
+		log.Errorf("Failed to bind JSON: %s", err.Error())
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
+		return structs.GinUser{}
+	}
+	return newUser
 }

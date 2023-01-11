@@ -15,4 +15,6 @@ COPY . .
 
 RUN cd main && CGO_ENABLED=0 go build -o /usr/bin/pseudo-kms main.go
 
+EXPOSE 80
+
 ENTRYPOINT ["/usr/bin/pseudo-kms"]

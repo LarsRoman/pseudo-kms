@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"github.com/labstack/gommon/log"
 	"lars-krieger.de/pseudo-kms/crypt/helper"
+	"lars-krieger.de/pseudo-kms/crypt/rsa"
 	"lars-krieger.de/pseudo-kms/database/models"
 )
 
@@ -20,7 +21,7 @@ func GetAllUsers(username, token string) []models.AccessUser {
 func GetUser(username, token string) models.AccessUser {
 	if CheckPassword(username, token) {
 		var users models.AccessUser
-		DB.First(users, models.AccessUser{
+		DB.First(&users, models.AccessUser{
 			Name: username,
 		})
 		return users
@@ -32,9 +33,9 @@ func GetUser(username, token string) models.AccessUser {
 func GetAndCheckUser(username, token string) (bool, models.AccessUser) {
 	if CheckPassword(username, token) && CheckPowerUser(username) {
 		var users models.AccessUser
-		DB.First(users, models.AccessUser{
+		DB.Where(&models.AccessUser{
 			Name: username,
-		})
+		}).First(&users)
 		return true, users
 	}
 	log.Infof("User %s is not a power user", username)
@@ -42,9 +43,9 @@ func GetAndCheckUser(username, token string) (bool, models.AccessUser) {
 }
 
 func CreateUser(username, token string, powerUser bool) {
-	DB.Create(&models.AccessUser{
+	DB.Create(models.AccessUser{
 		Name:      username,
-		Token:     createTokenHash(token),
+		Token:     createSecret(token),
 		PowerUser: powerUser,
 	})
 }
@@ -62,55 +63,31 @@ func DeleteUser(username, token string, usernameToDelete string) {
 }
 
 func CheckPowerUser(username string) bool {
-	var user = DB.Find(&models.AccessUser{Name: username, PowerUser: true})
-	if user.Error != nil {
-		log.Errorf("Poweruser was not valid: %s", user.Error.Error())
+	var user models.AccessUser
+	DB.Where(&models.AccessUser{
+		Name:      username,
+		PowerUser: true,
+	}).First(&user)
+	if user.Name != username || !user.PowerUser {
+		log.Errorf("Poweruser was not valid: %v", user)
 		return false
 	}
-	if rows, err := user.Rows(); err != nil {
-		log.Errorf("Poweruser Rows were not valid: %s", user.Error.Error())
-		defer rows.Close()
-		return false
-	} else {
-		defer rows.Close()
-		var userPuffer models.AccessUser
-		for rows.Next() {
-			if err := DB.ScanRows(rows, &userPuffer); err == nil {
-				if username == userPuffer.Name {
-					return userPuffer.PowerUser
-				}
-			}
-		}
-	}
-	return false
+	return true
 }
 
 func CheckPassword(username, token string) bool {
-	var user = DB.Find(&models.AccessUser{Name: username, Token: createTokenHash(token)})
-	if user.Error != nil {
-		log.Errorf("User or Token was not valid: %s", user.Error.Error())
+	var user models.AccessUser
+	DB.Where(models.AccessUser{
+		Name:  username,
+		Token: createSecret(token),
+	}).First(&user)
+	if user.Name != username || createSecret(token) != user.Token {
+		log.Errorf("User or Token was not valid: %v", user)
 		return false
 	}
-	if rows, err := user.Rows(); err != nil {
-		log.Errorf("User or Token Rows were not valid: %s", user.Error.Error())
-		defer rows.Close()
-		return false
-	} else {
-		defer rows.Close()
-		var userPuffer models.AccessUser
-		for rows.Next() {
-			if err := DB.ScanRows(rows, &userPuffer); err == nil {
-				if username == userPuffer.Name {
-					return true
-				}
-			}
-		}
-	}
-	return false
+	return true
 }
 
-func createTokenHash(token string) string {
-	var hasher = helper.SHA1.HashString()
-	hasher.Write([]byte(token))
-	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+func createSecret(token string) string {
+	return base64.URLEncoding.EncodeToString([]byte(rsa.RSA_MASTER_KEY.Encrypt(helper.ToHex([]byte(token)))))
 }

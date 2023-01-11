@@ -104,4 +104,9 @@ Following REST Calles are included by now:
 
 1. Clone the repository
 2. Edit the ENV file
-3. Run `docker-compose up`
+3. Run `docker-compose build && docker-compose up`
+
+## Change Config
+
+If you want to change the config and redeploy the container
+* Run `docker-compose down && docker-compose rm && docker-compose build && docker-compose up`

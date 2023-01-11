@@ -1,8 +1,6 @@
 package database
 
 import (
-	"encoding/hex"
-	"github.com/labstack/gommon/log"
 	"lars-krieger.de/pseudo-kms/crypt"
 	"lars-krieger.de/pseudo-kms/crypt/helper"
 	"lars-krieger.de/pseudo-kms/database/models"
@@ -35,15 +33,15 @@ func CreateKey(keyName, keyAlg, keyUse string, privateKey, publicKey []byte, key
 		KeyVersion: keyVersion,
 		KeyAlg:     keyAlg,
 		KeyUse:     keyUse,
-		PrivateKey: toHex(privateKey),
-		PublicKey:  toHex(publicKey),
+		PrivateKey: helper.ToHex(privateKey),
+		PublicKey:  helper.ToHex(publicKey),
 		Keystore:   keystore,
 	})
 }
 
 func RotateKey(key models.Keys, privateKey, publicKey []byte) {
-	key.PrivateKey = toHex(privateKey)
-	key.PublicKey = toHex(publicKey)
+	key.PrivateKey = helper.ToHex(privateKey)
+	key.PublicKey = helper.ToHex(publicKey)
 	key.KeyVersion = key.KeyVersion + 1
 	DB.Create(key)
 }
@@ -81,17 +79,4 @@ func DeleteKey(username, token, keyName string, keyVersion int) {
 			Keystore: keystore,
 		})
 	}
-}
-
-func toHex(bArr []byte) string {
-	return hex.EncodeToString(bArr)
-}
-
-func fromHex(hexString string) []byte {
-	if bArr, err := hex.DecodeString(hexString); err != nil {
-		log.Errorf("Decoding of Hex to ByteArray was not possible: %s", err.Error())
-	} else {
-		return bArr
-	}
-	return []byte{}
 }

@@ -47,7 +47,7 @@ func privateKeyToFile(privateKey *rsa.PrivateKey) {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: privateKeyBytes,
 	}
-	fileName := fmt.Sprintf("%d.pem", time.Now().UnixNano())
+	fileName := fmt.Sprintf("/data/pseudo-kms/private-%d.pem", time.Now().UnixNano())
 	privatePem, err := os.Create(fileName)
 	if err != nil {
 		log.Errorf("Error when creating %s: %s \n", fileName, err.Error())
@@ -118,7 +118,7 @@ func publicKeyToFile(publicKey *rsa.PublicKey) {
 		Type:  "PUBLIC KEY",
 		Bytes: publicKeyBytes,
 	}
-	publicPem, err := os.Create("public.pem")
+	publicPem, err := os.Create("/data/pseudo-kms/public.pem")
 	if err != nil {
 		log.Errorf("error when create public.pem: %s \n", err)
 		defer publicPem.Close()

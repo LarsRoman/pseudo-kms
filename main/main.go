@@ -8,6 +8,7 @@ import (
 	"lars-krieger.de/pseudo-kms/rest"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -26,6 +27,9 @@ func main() {
 		},
 	}
 	rsa.RSA_MASTER_KEY.ReadOrCreateMasterKey()
+
+	log.Infof("Waiting for database to be online. Est. time to wait: %d seconds", 3)
+	time.Sleep(3 * time.Second)
 
 	database.Init(
 		os.Getenv("POSTGRES_USER"),

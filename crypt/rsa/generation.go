@@ -63,9 +63,6 @@ func privateKeyToFile(privateKey *rsa.PrivateKey) {
 		log.Errorf("Error when closing %s: %s \n", fileName, err.Error())
 		return
 	}
-	//if err := os.Remove(fileName); err != nil {
-	//	log.Errorf("Error when deleting %s: %s \n", fileName, err.Error())
-	//}
 }
 
 func PrivateKeyToMem(privateKey *rsa.PrivateKey) []byte {
@@ -109,11 +106,7 @@ func MemToPublicKey(publicKeyBytes []byte) *rsa.PublicKey {
 }
 
 func publicKeyToFile(publicKey *rsa.PublicKey) {
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
-	if err != nil {
-		fmt.Printf("error when dumping PublicKey: %s \n", err)
-		os.Exit(1)
-	}
+	publicKeyBytes := x509.MarshalPKCS1PublicKey(publicKey)
 	publicKeyBlock := &pem.Block{
 		Type:  "PUBLIC KEY",
 		Bytes: publicKeyBytes,

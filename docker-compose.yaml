@@ -10,32 +10,32 @@ services:
       - pseudo-kms:/data/pseudo-kms
     restart: unless-stopped
     depends_on:
-      - kms_db
+      - kms_postgres
     ports:
       - "8080:80"
     expose:
       - "80"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.kmsweb.rule=Host(`kms.localhost`)"
+      - "traefik.http.routers.kmsweb.rule=Host(`${PROXY_HOST}`)"
       - "traefik.http.routers.kmsweb.entrypoints=web"
     networks:
       - kms-net
       - proxy
-  kms_db:
-    container_name: kms_db
+  kms_postgres:
+    container_name: kms_postgres
     image: postgres:15.1
     env_file:
       - ./pro.env
     volumes:
-      - postgres:/data/postgres
+      - postgres-kms:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
     networks:
       - kms-net
 volumes:
-  postgres:
+  postgres-kms:
   pseudo-kms:
 networks:
   proxy:

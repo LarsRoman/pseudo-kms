@@ -10,25 +10,25 @@ func GetOrCreateKey(ops crypt.AsymmetricKeyOps, username, token string) models.K
 	var opt helper.AsymmetricOpt = ops.GetInfo()
 	var keystore models.Keystore = GetOrCreateKeystore(username, token)
 	var key models.Keys
-	DB.First(&key, models.Keys{
+	DB.Where(&models.Keys{
 		KeyName:    opt.Name,
 		KeyVersion: opt.Version,
 		Keystore:   keystore,
-	})
+	}).First(&key)
 	if key.KeyVersion == 0 {
 		privateKey, publicKey := ops.Create()
 		CreateKey(opt.Name, string(ops.GetAlg()), "", privateKey, publicKey, 1, keystore)
-		DB.First(&key, models.Keys{
+		DB.Where(&models.Keys{
 			KeyName:    opt.Name,
 			KeyVersion: 1,
 			Keystore:   keystore,
-		})
+		}).First(&key)
 	}
 	return key
 }
 
 func CreateKey(keyName, keyAlg, keyUse string, privateKey, publicKey []byte, keyVersion int, keystore models.Keystore) {
-	DB.Create(models.Keys{
+	DB.Create(&models.Keys{
 		KeyName:    keyName,
 		KeyVersion: keyVersion,
 		KeyAlg:     keyAlg,

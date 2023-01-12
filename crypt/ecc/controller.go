@@ -71,6 +71,10 @@ func (e *ECC) Bind(key models.Keys) {
 	}
 }
 
+func (e ECC) GetPublicKeyPemHex() string {
+	return helper.ToHex(PublicKeyToMem(&e.PublicKey))
+}
+
 func getCurve(curve string) elliptic.Curve {
 	if strings.Contains(curve, "224") {
 		return elliptic.P224()

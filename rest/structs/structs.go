@@ -34,7 +34,15 @@ type GinKey struct {
 }
 
 type GinDeleteKey struct {
-	GinUser    GinUser
-	KeyName    string `json:"keyname"`
-	KeyVersion int    `json:"keyversion"`
+	GinUser      GinUser
+	DeletionDate string `json:"deletiondate"`
+	KeyName      string `json:"keyname"`
+	KeyVersion   int    `json:"keyversion"`
+}
+
+type GinReturnKey struct {
+	CreationDate string `json:"creationdate"`
+	KeyName      string `json:"keyname"`
+	KeyVersion   int    `json:"keyversion"`
+	PublicKey    string `json:"publickey"`
 }

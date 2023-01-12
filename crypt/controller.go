@@ -14,4 +14,5 @@ type AsymmetricKeyOps interface {
 	Encrypt(msg string) string
 	Decrypt(msg string) string
 	Bind(models.Keys)
+	GetPublicKeyPemHex() string
 }

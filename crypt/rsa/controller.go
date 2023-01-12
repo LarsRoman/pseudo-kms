@@ -72,3 +72,7 @@ func (r *RSA) Bind(key models.Keys) {
 		},
 	}
 }
+
+func (r RSA) GetPublicKeyPemHex() string {
+	return helper.ToHex(PublicKeyToMem(&r.PublicKey))
+}

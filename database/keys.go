@@ -1,9 +1,11 @@
 package database
 
 import (
+	"github.com/jinzhu/gorm"
 	"lars-krieger.de/pseudo-kms/crypt"
 	"lars-krieger.de/pseudo-kms/crypt/helper"
 	"lars-krieger.de/pseudo-kms/database/models"
+	"time"
 )
 
 func GetOrCreateKey(ops crypt.AsymmetricKeyOps, username, token string) models.Keys {
@@ -17,7 +19,7 @@ func GetOrCreateKey(ops crypt.AsymmetricKeyOps, username, token string) models.K
 	}).First(&key)
 	if key.KeyVersion == 0 {
 		privateKey, publicKey := ops.Create()
-		CreateKey(opt.Name, string(ops.GetAlg()), "", privateKey, publicKey, 1, keystore)
+		CreateKey(opt.Name, ops.GetAlg(), "encryption/signing", privateKey, publicKey, 1, keystore)
 		DB.Where(&models.Keys{
 			KeyName:    opt.Name,
 			KeyVersion: 1,
@@ -43,40 +45,74 @@ func RotateKey(key models.Keys, privateKey, publicKey []byte) {
 	key.PrivateKey = helper.ToHex(privateKey)
 	key.PublicKey = helper.ToHex(publicKey)
 	key.KeyVersion = key.KeyVersion + 1
+	key.DeletedAt = nil
 	DB.Create(key)
 }
 
 func GetCurrentKey(username, token, keyName string) models.Keys {
 	var keystore models.Keystore = GetOrCreateKeystore(username, token)
-	//TODO I need to read the GORM documentation because the following is shitty
-	var keyArr []models.Keys
-	DB.Find(&keyArr, models.Keys{
+	var key models.Keys
+	DB.Order("KeyVersion desc").Where(&models.Keys{
 		KeyName:  keyName,
 		Keystore: keystore,
-	})
-	//TODO Should be done by DB
-	var key models.Keys = keyArr[0]
-	for _, k := range keyArr {
-		if k.KeyVersion > key.KeyVersion {
-			key = k
-		}
-	}
+	}).First(&key)
+
 	return key
 }
 
-func DeleteKey(username, token, keyName string, keyVersion int) {
+func GetAllKeys(username, token, keyName string) []models.Keys {
 	var keystore models.Keystore = GetOrCreateKeystore(username, token)
 	//TODO I need to read the GORM documentation because the following is shitty
-	if keyVersion >= 0 {
-		DB.Delete(&models.Keys{}, models.Keys{
-			KeyName:    keyName,
-			Keystore:   keystore,
-			KeyVersion: keyVersion,
-		})
+	var keyArr, keys []models.Keys
+	DB.Where(&models.Keys{
+		KeyName:  keyName,
+		Keystore: keystore,
+	}).Find(&keyArr)
+	var now time.Time = time.Now()
+	for _, key := range keyArr {
+		if key.DeletedAt == nil || key.DeletedAt.After(now) {
+			keys = append(keys, key)
+		}
+	}
+	return keys
+}
+
+func DeleteKey(username, token, keyName string, keyVersion int, deletionTime int64) {
+	var keystore models.Keystore = GetOrCreateKeystore(username, token)
+	if deletionTime != -1 {
+		var deletionDate time.Time = time.Unix(0, deletionTime)
+		if keyVersion == -1 {
+			DB.Model(&models.Keys{}).Where(&models.Keys{
+				KeyName:  keyName,
+				Keystore: keystore,
+			}).Select("*").Update(models.Keys{
+				Model: gorm.Model{
+					DeletedAt: &deletionDate,
+				},
+			})
+		} else {
+			DB.Model(&models.Keys{}).Where(&models.Keys{
+				KeyName:    keyName,
+				Keystore:   keystore,
+				KeyVersion: keyVersion,
+			}).Select("*").Update(models.Keys{
+				Model: gorm.Model{
+					DeletedAt: &deletionDate,
+				},
+			})
+		}
 	} else {
-		DB.Delete(&models.Keys{}, models.Keys{
-			KeyName:  keyName,
-			Keystore: keystore,
-		})
+		if keyVersion == -1 {
+			DB.Delete(&models.Keys{}, models.Keys{
+				KeyName:  keyName,
+				Keystore: keystore,
+			})
+		} else {
+			DB.Delete(&models.Keys{}, models.Keys{
+				KeyName:    keyName,
+				Keystore:   keystore,
+				KeyVersion: keyVersion,
+			})
+		}
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"lars-krieger.de/pseudo-kms/database/models"
 	"lars-krieger.de/pseudo-kms/rest/structs"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -25,7 +26,8 @@ func Router(host string, port int) {
 	router.POST("/sign", postSignWithKey)
 	router.POST("/encrypt", postEncrypt)
 	router.POST("/decrypt", postDecrypt)
-	router.GET("/get/key", getKey)
+	router.POST("/get/key", getKey)
+	router.POST("/get/keys", getKeys)
 	router.POST("/remove/key", postDeleteKey)
 	router.POST("/remove/user", postDeleteUser)
 
@@ -49,7 +51,43 @@ func getKey(c *gin.Context) {
 		usedJSONStruct.GinUser.Token,
 		usedJSONStruct.KeyName,
 	)
-	c.IndentedJSON(http.StatusOK, gin.H{"message": fmt.Sprintf("%s", key.PublicKey)})
+	var ops crypt.AsymmetricKeyOps
+	ops = detectECCorRSA(key.KeyAlg)
+	ops.Bind(key)
+	c.IndentedJSON(http.StatusOK, structs.GinReturnKey{
+		CreationDate: strconv.FormatInt(key.CreatedAt.UnixNano(), 10),
+		KeyName:      key.KeyName,
+		KeyVersion:   key.KeyVersion,
+		PublicKey:    ops.GetPublicKeyPemHex(),
+	})
+}
+
+func getKeys(c *gin.Context) {
+	var usedJSONStruct structs.GinKey
+	if err := c.ShouldBindBodyWith(&usedJSONStruct, binding.JSON); err != nil {
+		log.Errorf("Failed to bind JSON: %s", err.Error())
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON"})
+		return
+	}
+	usedJSONStruct.GinUser = bindGinUser(c)
+	var keys []models.Keys = database.GetAllKeys(
+		usedJSONStruct.GinUser.Username,
+		usedJSONStruct.GinUser.Token,
+		usedJSONStruct.KeyName,
+	)
+	var mappedKeys []structs.GinReturnKey
+	for _, key := range keys {
+		var ops crypt.AsymmetricKeyOps
+		ops = detectECCorRSA(key.KeyAlg)
+		ops.Bind(key)
+		mappedKeys = append(mappedKeys, structs.GinReturnKey{
+			CreationDate: key.CreatedAt.String(),
+			KeyName:      key.KeyName,
+			KeyVersion:   key.KeyVersion,
+			PublicKey:    ops.GetPublicKeyPemHex(),
+		})
+	}
+	c.IndentedJSON(http.StatusOK, mappedKeys)
 }
 
 func postDeleteKey(c *gin.Context) {
@@ -60,13 +98,20 @@ func postDeleteKey(c *gin.Context) {
 		return
 	}
 	usedJSONStruct.GinUser = bindGinUser(c)
-	database.DeleteKey(
-		usedJSONStruct.GinUser.Username,
-		usedJSONStruct.GinUser.Token,
-		usedJSONStruct.KeyName,
-		usedJSONStruct.KeyVersion,
-	)
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	if deletionDateUnixNano, err := strconv.ParseInt(usedJSONStruct.DeletionDate, 10, 64); err != nil {
+		log.Errorf("Parsing of deletion time failed: %s", err.Error())
+		c.IndentedJSON(http.StatusInternalServerError,
+			gin.H{"message": "Parsing of the deletiontime failed. Please provide a valid UnixNano"})
+	} else {
+		database.DeleteKey(
+			usedJSONStruct.GinUser.Username,
+			usedJSONStruct.GinUser.Token,
+			usedJSONStruct.KeyName,
+			usedJSONStruct.KeyVersion,
+			deletionDateUnixNano,
+		)
+		c.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	}
 }
 
 func postDeleteUser(c *gin.Context) {

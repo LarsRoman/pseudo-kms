@@ -15,14 +15,17 @@ KEYSTORE -- 1 : N --> KEYS
 
 Following REST Calles are included by now:
 
-    router.POST("/rotate", postRotateKey)  
-    router.POST("/create/key", postCreateKey)  
-    router.POST("/create/keystore", postCreateKeyStore)  
-    router.POST("/create/user", postCreateUser)  
-    router.POST("/sign", postSignWithKey)  
-    router.POST("/encrypt", postEncrypt)  
-    router.POST("/decrypt", postDecrypt)  
-    router.GET("/get/key", getKey)
+	router.POST("/rotate", postRotateKey)
+	router.POST("/create/key", postCreateKey)
+	router.POST("/create/keystore", postCreateKeyStore)
+	router.POST("/create/user", postCreateUser)
+	router.POST("/sign", postSignWithKey)
+	router.POST("/encrypt", postEncrypt)
+	router.POST("/decrypt", postDecrypt)
+	router.POST("/get/key", getKey)
+	router.POST("/get/keys", getKeys)
+	router.POST("/remove/key", postDeleteKey)
+	router.POST("/remove/user", postDeleteUser)
 
 
 ## Following JSON is consumed by the endpoints:
@@ -30,6 +33,14 @@ Following REST Calles are included by now:
 ### /rotate
 
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO ROTATE"}
+
+### /get/key
+
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY FROM WHICH TO RECEIVE CURRENT VERSION"}
+
+### /get/keys
+
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY FROM WHICH TO RECEIVE ALL VERSIONS"}
 
 ### /create/key
 
@@ -57,7 +68,7 @@ Following REST Calles are included by now:
 
 ### /remove/key
 
-    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE DELETED", "keyversion": keyversion to be deleted (in case to delete all version, use -1)}
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE DELETED", "keyversion": keyversion to be deleted (in case to delete all version, use -1), "deletiontime": "Timestamp as UnixNano(int64) when the key shall be delete, use -1 to delete it directly"}
 
 ### /remove/user
 
@@ -76,6 +87,7 @@ Following REST Calles are included by now:
 | /encrypt         | YES | YES |
 | /decrypt         | YES | YES |
 | /get/key         | YES | YES |
+| /get/keys        | YES | YES |
 | /delete/key      | YES | YES |
 
 

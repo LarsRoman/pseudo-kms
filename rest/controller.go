@@ -46,10 +46,11 @@ func getKey(c *gin.Context) {
 		return
 	}
 	usedJSONStruct.GinUser = bindGinUser(c)
-	var key models.Keys = database.GetCurrentKey(
+	var key models.Keys = database.GetKey(
 		usedJSONStruct.GinUser.Username,
 		usedJSONStruct.GinUser.Token,
 		usedJSONStruct.KeyName,
+		usedJSONStruct.KeyVersion,
 	)
 	var ops crypt.AsymmetricKeyOps
 	ops = detectECCorRSA(key.KeyAlg)
@@ -150,8 +151,13 @@ func postRotateKey(c *gin.Context) {
 	}
 	ops.Bind(currentKey)
 	privateKey, publicKey := ops.Create()
-	database.RotateKey(currentKey, privateKey, publicKey)
-	c.IndentedJSON(http.StatusCreated, gin.H{"message": fmt.Sprintf("%s Key was Created", ops.GetAlg())})
+	var newKey models.Keys = database.RotateKey(currentKey, privateKey, publicKey)
+	c.IndentedJSON(http.StatusCreated, structs.GinReturnKey{
+		CreationDate: strconv.FormatInt(newKey.CreatedAt.UnixNano(), 10),
+		KeyName:      newKey.KeyName,
+		KeyVersion:   newKey.KeyVersion,
+		PublicKey:    newKey.PublicKey,
+	})
 }
 
 func postCreateKeyStore(c *gin.Context) {
@@ -186,8 +192,13 @@ func postCreateKey(c *gin.Context) {
 		KeyCurve:   usedJSONStruct.KeyCurve,
 		KeyUse:     "encryption/signing",
 	})
-	database.GetOrCreateKey(ops, usedJSONStruct.GinUser.Username, usedJSONStruct.GinUser.Token)
-	c.IndentedJSON(http.StatusCreated, gin.H{"message": "RSA Key was Created"})
+	var newKey models.Keys = database.GetOrCreateKey(ops, usedJSONStruct.GinUser.Username, usedJSONStruct.GinUser.Token)
+	c.IndentedJSON(http.StatusCreated, structs.GinReturnKey{
+		CreationDate: strconv.FormatInt(newKey.CreatedAt.UnixNano(), 10),
+		KeyName:      newKey.KeyName,
+		KeyVersion:   newKey.KeyVersion,
+		PublicKey:    newKey.PublicKey,
+	})
 }
 
 func postSignWithKey(c *gin.Context) {
@@ -198,10 +209,11 @@ func postSignWithKey(c *gin.Context) {
 		return
 	}
 	usedJSONStruct.GinUser = bindGinUser(c)
-	var key models.Keys = database.GetCurrentKey(
+	var key models.Keys = database.GetKey(
 		usedJSONStruct.GinUser.Username,
 		usedJSONStruct.GinUser.Token,
 		usedJSONStruct.KeyName,
+		usedJSONStruct.KeyVersion,
 	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
 	if ops == nil {
@@ -209,7 +221,7 @@ func postSignWithKey(c *gin.Context) {
 		return
 	}
 	var hexSignature string = ops.Sign(usedJSONStruct.Message)
-	c.IndentedJSON(http.StatusOK, gin.H{"message": hexSignature})
+	c.IndentedJSON(http.StatusOK, structs.GinReturnSignature{Signature: hexSignature})
 }
 
 func postEncrypt(c *gin.Context) {
@@ -220,10 +232,11 @@ func postEncrypt(c *gin.Context) {
 		return
 	}
 	usedJSONStruct.GinUser = bindGinUser(c)
-	var key models.Keys = database.GetCurrentKey(
+	var key models.Keys = database.GetKey(
 		usedJSONStruct.GinUser.Username,
 		usedJSONStruct.GinUser.Token,
 		usedJSONStruct.KeyName,
+		usedJSONStruct.KeyVersion,
 	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
 	if ops == nil {
@@ -231,7 +244,7 @@ func postEncrypt(c *gin.Context) {
 		return
 	}
 	var hexEncrypt string = ops.Encrypt(usedJSONStruct.Message)
-	c.IndentedJSON(http.StatusOK, gin.H{"message": hexEncrypt})
+	c.IndentedJSON(http.StatusOK, structs.GinReturnEncryption{Encryption: hexEncrypt})
 }
 
 func postDecrypt(c *gin.Context) {
@@ -242,10 +255,11 @@ func postDecrypt(c *gin.Context) {
 		return
 	}
 	usedJSONStruct.GinUser = bindGinUser(c)
-	var key models.Keys = database.GetCurrentKey(
+	var key models.Keys = database.GetKey(
 		usedJSONStruct.GinUser.Username,
 		usedJSONStruct.GinUser.Token,
 		usedJSONStruct.KeyName,
+		usedJSONStruct.KeyVersion,
 	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
 	if ops == nil {
@@ -253,7 +267,7 @@ func postDecrypt(c *gin.Context) {
 		return
 	}
 	var hexDecrypt string = ops.Decrypt(usedJSONStruct.Message)
-	c.IndentedJSON(http.StatusOK, gin.H{"message": hexDecrypt})
+	c.IndentedJSON(http.StatusOK, structs.GinReturnDecryption{Decryption: hexDecrypt})
 }
 
 func postCreateUser(c *gin.Context) {

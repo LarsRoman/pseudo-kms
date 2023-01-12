@@ -27,10 +27,12 @@ type GinCreateKey struct {
 }
 
 type GinKey struct {
-	GinUser GinUser
-	KeyName string `json:"keyname"`
-	Message string `json:"msg"`
-	Hash    string `json:"hash"`
+	GinUser    GinUser
+	KeyName    string `json:"keyname"`
+	KeyVersion int    `json:"keyversion"`
+	KeyAlg     string `json:"keyalg"`
+	Message    string `json:"msg"`
+	Hash       string `json:"hash"`
 }
 
 type GinDeleteKey struct {
@@ -45,4 +47,16 @@ type GinReturnKey struct {
 	KeyName      string `json:"keyname"`
 	KeyVersion   int    `json:"keyversion"`
 	PublicKey    string `json:"publickey"`
+}
+
+type GinReturnSignature struct {
+	Signature string `json:"signature"`
+}
+
+type GinReturnEncryption struct {
+	Encryption string `json:"encryption"`
+}
+
+type GinReturnDecryption struct {
+	Decryption string `json:"decryption"`
 }

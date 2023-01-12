@@ -36,7 +36,7 @@ Following REST Calles are included by now:
 
 ### /get/key
 
-    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY FROM WHICH TO RECEIVE CURRENT VERSION"}
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY NAME", "keyversion": Key Version or -1 for the most recent one}
 
 ### /get/keys
 
@@ -56,15 +56,15 @@ Following REST Calles are included by now:
 
 ### /sign
 
-    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "msg": "MESSAGE AS HEX"}
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "keyversion": Key Version or -1 for the most recent one, "msg": "MESSAGE AS HEX"}
 
 ### /encrypt
 
-    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "msg": "MESSAGE AS HEX"}
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "keyversion": Key Version or -1 for the most recent one, "msg": "MESSAGE AS HEX"}
 
 ### /decrypt
 
-    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "msg": "MESSAGE AS HEX"}
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "keyversion": Key Version or -1 for the most recent one, "msg": "MESSAGE AS HEX"}
 
 ### /remove/key
 

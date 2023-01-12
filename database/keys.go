@@ -19,18 +19,13 @@ func GetOrCreateKey(ops crypt.AsymmetricKeyOps, username, token string) models.K
 	}).First(&key)
 	if key.KeyVersion == 0 {
 		privateKey, publicKey := ops.Create()
-		CreateKey(opt.Name, ops.GetAlg(), "encryption/signing", privateKey, publicKey, 1, keystore)
-		DB.Where(&models.Keys{
-			KeyName:    opt.Name,
-			KeyVersion: 1,
-			Keystore:   keystore,
-		}).First(&key)
+		return CreateKey(opt.Name, ops.GetAlg(), "encryption/signing", privateKey, publicKey, 1, keystore)
 	}
 	return key
 }
 
-func CreateKey(keyName, keyAlg, keyUse string, privateKey, publicKey []byte, keyVersion int, keystore models.Keystore) {
-	DB.Create(&models.Keys{
+func CreateKey(keyName, keyAlg, keyUse string, privateKey, publicKey []byte, keyVersion int, keystore models.Keystore) models.Keys {
+	var key models.Keys = models.Keys{
 		KeyName:    keyName,
 		KeyVersion: keyVersion,
 		KeyAlg:     keyAlg,
@@ -38,15 +33,18 @@ func CreateKey(keyName, keyAlg, keyUse string, privateKey, publicKey []byte, key
 		PrivateKey: helper.ToHex(privateKey),
 		PublicKey:  helper.ToHex(publicKey),
 		Keystore:   keystore,
-	})
+	}
+	DB.Create(&key)
+	return key
 }
 
-func RotateKey(key models.Keys, privateKey, publicKey []byte) {
+func RotateKey(key models.Keys, privateKey, publicKey []byte) models.Keys {
 	key.PrivateKey = helper.ToHex(privateKey)
 	key.PublicKey = helper.ToHex(publicKey)
 	key.KeyVersion = key.KeyVersion + 1
 	key.DeletedAt = nil
-	DB.Create(key)
+	DB.Create(&key)
+	return key
 }
 
 func GetCurrentKey(username, token, keyName string) models.Keys {
@@ -56,7 +54,20 @@ func GetCurrentKey(username, token, keyName string) models.Keys {
 		KeyName:  keyName,
 		Keystore: keystore,
 	}).First(&key)
+	return key
+}
 
+func GetKey(username, token, keyName string, keyVersion int) models.Keys {
+	if keyVersion == -1 {
+		return GetCurrentKey(username, token, keyName)
+	}
+	var keystore models.Keystore = GetOrCreateKeystore(username, token)
+	var key models.Keys
+	DB.Order("KeyVersion desc").Order("id").Where(&models.Keys{
+		KeyName:    keyName,
+		Keystore:   keystore,
+		KeyVersion: keyVersion,
+	}).First(&key)
 	return key
 }
 

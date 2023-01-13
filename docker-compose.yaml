@@ -12,12 +12,12 @@ services:
     depends_on:
       - kms_postgres
     ports:
-      - "8080:80"
+      - "${GIN_PORT:-8080}:80"
     expose:
       - "80"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.kmsweb.rule=Host(`${PROXY_HOST}`)"
+      - "traefik.http.routers.kmsweb.rule=Host(`${PROXY_HOST:-kms.local}`)"
       - "traefik.http.routers.kmsweb.entrypoints=web"
     networks:
       - kms-net
@@ -34,9 +34,25 @@ services:
     restart: unless-stopped
     networks:
       - kms-net
+  kms_pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-adminpw}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin-kms:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - kms-net
+      - proxy
+    restart: unless-stopped
 volumes:
   postgres-kms:
   pseudo-kms:
+  pgadmin-kms:
 networks:
   proxy:
     external: true

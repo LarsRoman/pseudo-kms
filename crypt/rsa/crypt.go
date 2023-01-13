@@ -1,8 +1,10 @@
 package rsa
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 	"github.com/labstack/gommon/log"
 	"lars-krieger.de/pseudo-kms/crypt/helper"
 )
@@ -78,8 +80,13 @@ func SignPKCS1v15(privateKey rsa.PrivateKey, hash helper.Hashes, digest []byte) 
 		rand.Reader,
 		&privateKey,
 		hash.CryptoString(),
-		digest); err != nil {
-		log.Errorf("Signing PKCS1v15 failed: %s", err.Error())
+		hash.CreateHashFromDigest(digest)); err != nil {
+		log.Errorf("Signing PKCS1v15 %s failed: %s",
+			fmt.Sprintf("with hash %s", hash), err.Error())
+		if hash.CryptoString() == crypto.Hash(0) {
+			log.Infof("Trying to sign with SHA 256")
+			return SignPKCS1v15(privateKey, helper.FromString("256"), digest)
+		}
 	} else {
 		return signature
 	}

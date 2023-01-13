@@ -5,6 +5,7 @@ import (
 	"lars-krieger.de/pseudo-kms/crypt"
 	"lars-krieger.de/pseudo-kms/crypt/helper"
 	"lars-krieger.de/pseudo-kms/database/models"
+	"strconv"
 	"time"
 )
 
@@ -15,7 +16,7 @@ func GetOrCreateKey(ops crypt.AsymmetricKeyOps, username, token string) models.K
 	DB.Where(&models.Keys{
 		KeyName:    opt.Name,
 		KeyVersion: opt.Version,
-		Keystore:   keystore,
+		Keystore:   strconv.FormatUint(uint64(keystore.ID), 10),
 	}).First(&key)
 	if key.KeyVersion == 0 {
 		privateKey, publicKey := ops.Create()
@@ -32,27 +33,33 @@ func CreateKey(keyName, keyAlg, keyUse string, privateKey, publicKey []byte, key
 		KeyUse:     keyUse,
 		PrivateKey: helper.ToHex(privateKey),
 		PublicKey:  helper.ToHex(publicKey),
-		Keystore:   keystore,
+		Keystore:   strconv.FormatUint(uint64(keystore.ID), 10),
 	}
 	DB.Create(&key)
 	return key
 }
 
 func RotateKey(key models.Keys, privateKey, publicKey []byte) models.Keys {
-	key.PrivateKey = helper.ToHex(privateKey)
-	key.PublicKey = helper.ToHex(publicKey)
-	key.KeyVersion = key.KeyVersion + 1
-	key.DeletedAt = nil
-	DB.Create(&key)
+	DB.Create(&models.Keys{
+		KeyName:    key.KeyName,
+		KeyVersion: key.KeyVersion + 1,
+		KeyAlg:     key.KeyAlg,
+		KeySize:    key.KeySize,
+		KeyCurve:   key.KeyCurve,
+		KeyUse:     key.KeyUse,
+		PrivateKey: helper.ToHex(privateKey),
+		PublicKey:  helper.ToHex(publicKey),
+		Keystore:   key.Keystore,
+	})
 	return key
 }
 
 func GetCurrentKey(username, token, keyName string) models.Keys {
 	var keystore models.Keystore = GetOrCreateKeystore(username, token)
 	var key models.Keys
-	DB.Order("KeyVersion desc").Where(&models.Keys{
+	DB.Order("key_version desc").Where(&models.Keys{
 		KeyName:  keyName,
-		Keystore: keystore,
+		Keystore: strconv.FormatUint(uint64(keystore.ID), 10),
 	}).First(&key)
 	return key
 }
@@ -63,9 +70,9 @@ func GetKey(username, token, keyName string, keyVersion int) models.Keys {
 	}
 	var keystore models.Keystore = GetOrCreateKeystore(username, token)
 	var key models.Keys
-	DB.Order("KeyVersion desc").Order("id").Where(&models.Keys{
+	DB.Order("key_version desc").Order("id").Where(&models.Keys{
 		KeyName:    keyName,
-		Keystore:   keystore,
+		Keystore:   strconv.FormatUint(uint64(keystore.ID), 10),
 		KeyVersion: keyVersion,
 	}).First(&key)
 	return key
@@ -77,7 +84,7 @@ func GetAllKeys(username, token, keyName string) []models.Keys {
 	var keyArr, keys []models.Keys
 	DB.Where(&models.Keys{
 		KeyName:  keyName,
-		Keystore: keystore,
+		Keystore: strconv.FormatUint(uint64(keystore.ID), 10),
 	}).Find(&keyArr)
 	var now time.Time = time.Now()
 	for _, key := range keyArr {
@@ -95,7 +102,7 @@ func DeleteKey(username, token, keyName string, keyVersion int, deletionTime int
 		if keyVersion == -1 {
 			DB.Model(&models.Keys{}).Where(&models.Keys{
 				KeyName:  keyName,
-				Keystore: keystore,
+				Keystore: strconv.FormatUint(uint64(keystore.ID), 10),
 			}).Select("*").Update(models.Keys{
 				Model: gorm.Model{
 					DeletedAt: &deletionDate,
@@ -104,7 +111,7 @@ func DeleteKey(username, token, keyName string, keyVersion int, deletionTime int
 		} else {
 			DB.Model(&models.Keys{}).Where(&models.Keys{
 				KeyName:    keyName,
-				Keystore:   keystore,
+				Keystore:   strconv.FormatUint(uint64(keystore.ID), 10),
 				KeyVersion: keyVersion,
 			}).Select("*").Update(models.Keys{
 				Model: gorm.Model{
@@ -116,12 +123,12 @@ func DeleteKey(username, token, keyName string, keyVersion int, deletionTime int
 		if keyVersion == -1 {
 			DB.Delete(&models.Keys{}, models.Keys{
 				KeyName:  keyName,
-				Keystore: keystore,
+				Keystore: strconv.FormatUint(uint64(keystore.ID), 10),
 			})
 		} else {
 			DB.Delete(&models.Keys{}, models.Keys{
 				KeyName:    keyName,
-				Keystore:   keystore,
+				Keystore:   strconv.FormatUint(uint64(keystore.ID), 10),
 				KeyVersion: keyVersion,
 			})
 		}

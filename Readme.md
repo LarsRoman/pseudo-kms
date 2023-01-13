@@ -44,7 +44,7 @@ Following REST Calles are included by now:
 
 ### /create/key
 
-    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keytype": "SEE LIST", "keyname": "KEYNAME", "keyversion": 0}
+    {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keytype": "SEE LIST", "keyname": "KEYNAME", "keyversion": 0, "keysize": keysize for RSA, "keycurve": "Curve for ECC"}
 
 ### /create/keystore
 
@@ -122,3 +122,7 @@ Following REST Calles are included by now:
 
 If you want to change the config and redeploy the container
 * Run `docker-compose down && docker-compose rm && docker-compose build && docker-compose up`
+
+## Problems
+
+Problems on saving the private_key in DB drop the `keys_private_key_key` constraints in the keys table

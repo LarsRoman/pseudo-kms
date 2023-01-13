@@ -37,6 +37,7 @@ func main() {
 		os.Getenv("DATABASE_HOST"),
 		os.Getenv("POSTGRES_DB"),
 		os.Getenv("DATABASE_PORT"),
+		os.Getenv("GORM_DEBUGGING"),
 	)
 
 	database.CreateUser(os.Getenv("ADMIN_USER"), os.Getenv("ADMIN_PASSWORD"), true)

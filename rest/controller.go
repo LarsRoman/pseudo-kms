@@ -216,6 +216,7 @@ func postSignWithKey(c *gin.Context) {
 		usedJSONStruct.KeyVersion,
 	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
+	ops.Bind(key)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
 		return
@@ -239,6 +240,7 @@ func postEncrypt(c *gin.Context) {
 		usedJSONStruct.KeyVersion,
 	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
+	ops.Bind(key)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
 		return
@@ -262,6 +264,7 @@ func postDecrypt(c *gin.Context) {
 		usedJSONStruct.KeyVersion,
 	)
 	var ops crypt.AsymmetricKeyOps = detectECCorRSA(key.KeyAlg)
+	ops.Bind(key)
 	if ops == nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "KeyType was not found"})
 		return

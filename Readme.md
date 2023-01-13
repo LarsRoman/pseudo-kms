@@ -28,52 +28,77 @@ Following REST Calles are included by now:
 	router.POST("/remove/user", postDeleteUser)
 
 
-## Following JSON is consumed by the endpoints:
+## Endpoints:
 
 ### /rotate
 
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO ROTATE"}
+#### Response
+    {"creationdate": "UNIX NANO", "keyname": "KEYNAME", "keyversion": 0, "publickey": "HEX ENCODED"}
 
 ### /get/key
 
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY NAME", "keyversion": Key Version or -1 for the most recent one}
+#### Response
+    {"creationdate": "UNIX NANO", "keyname": "KEYNAME", "keyversion": 0, "publickey": "HEX ENCODED"}
 
 ### /get/keys
 
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY FROM WHICH TO RECEIVE ALL VERSIONS"}
+#### Response
+    [{"creationdate": "UNIX NANO", "keyname": "KEYNAME", "keyversion": 0, "publickey": "HEX ENCODED"}]
 
 ### /create/key
 
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keytype": "SEE LIST", "keyname": "KEYNAME", "keyversion": 0, "keysize": keysize for RSA, "keycurve": "Curve for ECC"}
+#### Response
+    {"creationdate": "UNIX NANO", "keyname": "KEYNAME", "keyversion": 0, "publickey": "HEX ENCODED"}
 
 ### /create/keystore
-
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN"}
+#### Response
+    {"message": "Keystore Created"}
 
 ### /create/user
-
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "newusername": "NEW USERNAME", "newtoken": "NEW TOKEN"}
+#### Response
+    {"message": "User {NEW USERNAME} created"}
 
 ### /sign
-
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "keyversion": Key Version or -1 for the most recent one, "msg": "MESSAGE AS HEX"}
+#### Response
+    {"message": "HEX ENCODED SIGNATURE"}
 
 ### /encrypt
-
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "keyversion": Key Version or -1 for the most recent one, "msg": "MESSAGE AS HEX"}
+#### Response
+    {"message": "HEX ENCODED"}
 
 ### /decrypt
-
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE USED", "keyversion": Key Version or -1 for the most recent one, "msg": "MESSAGE AS HEX"}
+#### Response
+    {"message": "HEX ENCODED"}
 
 ### /remove/key
-
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "keyname": "KEY TO BE DELETED", "keyversion": keyversion to be deleted (in case to delete all version, use -1), "deletiontime": "Timestamp as UnixNano(int64) when the key shall be delete, use -1 to delete it directly"}
+#### Response
+    {"message": "OK"}
 
 ### /remove/user
-
+#### Consumes
     {"username": "YOUR USERNAME", "token": "YOUR TOKEN", "deleteusername": "USER TO BE REMOVED"}
-
+#### Response
+    {"message": "OK"}
 
 ## Implementation
 

@@ -40,7 +40,7 @@ func CreateKey(keyName, keyAlg, keyUse string, privateKey, publicKey []byte, key
 }
 
 func RotateKey(key models.Keys, privateKey, publicKey []byte) models.Keys {
-	DB.Create(&models.Keys{
+	var newKey models.Keys = models.Keys{
 		KeyName:    key.KeyName,
 		KeyVersion: key.KeyVersion + 1,
 		KeyAlg:     key.KeyAlg,
@@ -50,8 +50,9 @@ func RotateKey(key models.Keys, privateKey, publicKey []byte) models.Keys {
 		PrivateKey: helper.ToHex(privateKey),
 		PublicKey:  helper.ToHex(publicKey),
 		Keystore:   key.Keystore,
-	})
-	return key
+	}
+	DB.Create(&newKey)
+	return newKey
 }
 
 func GetCurrentKey(username, token, keyName string) models.Keys {

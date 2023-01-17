@@ -99,7 +99,16 @@ func postDeleteKey(c *gin.Context) {
 		return
 	}
 	usedJSONStruct.GinUser = bindGinUser(c)
-	if deletionDateUnixNano, err := strconv.ParseInt(usedJSONStruct.DeletionDate, 10, 64); err != nil {
+	if usedJSONStruct.DeletionDate == "-1" || usedJSONStruct.DeletionDate == "" {
+		database.DeleteKey(
+			usedJSONStruct.GinUser.Username,
+			usedJSONStruct.GinUser.Token,
+			usedJSONStruct.KeyName,
+			usedJSONStruct.KeyVersion,
+			int64(-1),
+		)
+		c.IndentedJSON(http.StatusOK, gin.H{"message": "OK"})
+	} else if deletionDateUnixNano, err := strconv.ParseInt(usedJSONStruct.DeletionDate, 10, 64); err != nil {
 		log.Errorf("Parsing of deletion time failed: %s", err.Error())
 		c.IndentedJSON(http.StatusInternalServerError,
 			gin.H{"message": "Parsing of the deletiontime failed. Please provide a valid UnixNano"})
